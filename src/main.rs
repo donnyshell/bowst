@@ -162,17 +162,35 @@ fn irc_connect(books: Vec<Book>, conn: Connection){
     }
 }
 
-//check if last char is \d, if so increment, if not, append
-/*
-fn generate_new_nickname(nick : &mut String){
-    let last_character = nick.chars().last().unwrap();
-    match last_character {
-        digit if digit.is_digit(10) => String::from(nick)
-            .split_at(nick.len() - 1)
-            .
+
+fn generate_new_nickname(mut nick: String) -> String {
+    let chars = nick.chars().rev().collect::<Vec<_>>();
+    let mut num_index = None;
+
+    for i in 0..chars.len() {
+        if !(chars[i].is_digit(10)) {
+            num_index = Some(i);
+            break;
+        }
     }
+
+    match num_index {
+        Some(i) => {
+            let index = chars.len()-i;
+            let num: usize = nick[index..].parse().unwrap();
+            let num += 1;
+            nick.truncate(index);
+            nick.push_str(num.to_string().as_str());
+
+        },
+        None => {
+            nick.push_str(nick);
+            nick.push('1');
+        },
+    }
+    nick
 }
-*/
+
 
 //gets both whois response messages and quit messages, edits the user online vector
 //fn user_online_handler(name:
