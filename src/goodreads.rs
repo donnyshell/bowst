@@ -1,4 +1,3 @@
-const GOODREADS_URL: &str = "https://www.goodreads.com/review/list_rss/";
 
 struct Book { 
     title: String,
@@ -13,24 +12,8 @@ struct CalibreBook {
 }
 
 
-// this should download all the users so I can reuse the client instead of rebuilding it
-
-fn download_shelf(&userId: u32, shelf: &String) -> String {
-    // concat onto url <USER_ID>?shelf=<SHELF>
-
-    let response = client
-        .get(url)
-        .send()
-        .unwrap()
-        .text()
-        .unwrap();
-
-    response
-}
-
-
 // TODO implement download shelf and figure out how i want to provide the url
-fn Goodreads_Download_Manager(users: &Vec<GoodreadsUser) -> HashMap<String,String> {
+fn Goodreads_Download_Manager(users: &Vec<GoodreadsUser) -> Result<HashMap<String,String>, Box<dyn Error>> {
     let mut headers = HeaderMap::new();
     headers.insert("User-Agent", String::from("rust-rss"));
 
@@ -41,13 +24,17 @@ fn Goodreads_Download_Manager(users: &Vec<GoodreadsUser) -> HashMap<String,Strin
             eprintln!("Error building the reqwest client: {err}");
             process::exit(1);
         });
-    let url = Url::parse_with_params(GOODREADS_URL);
+    let url: &str =;
 
     let mut books_to_download = HashMap::new();
 
     for user in users {
         for shelf in user.shelves {
-            let response = download_shelf(&user.user_id, &shelf
+            let url = format!( "https://www.goodreads.com/review/list_rss/{id}?shelf={shelf}", id = user.id, shelf = shelf);
+            let response = client
+                .get(url)
+                .send()?
+                .text()?
                 }
                 }
 }

@@ -1,6 +1,7 @@
 use std::net::{TcpStream, SocketAddr, ToSocketAddrs};
 use std::error::Error;
 use std::io;
+use std::io::prelude::*;
 
 
 pub struct Connection {
@@ -13,9 +14,9 @@ pub struct Connection {
 
 impl Connection {
     pub fn build(url: String, port: u32, nick: String, chan: String) -> Result<Connection, Box<dyn Error>> {
-    let mut addrs = format!("{url}:{port}").to_socket_addrs()?;
+    let addrs = format!("{url}:{port}").to_socket_addrs()?;
 
-    let stream = connect_irc_first_available(addrs)?;
+    let mut stream = connect_irc_first_available(addrs)?;
 
     let (mut ircReader, mut ircWriter) = (io::BufReader::new(stream.try_clone()?), stream);
 
@@ -85,9 +86,10 @@ fn irc_manager(irc: Connection, books: Vec<Book>){
 
 }
 */
-fn shutdown(&mut irc: Connection){
-    let part = format!("PART {}\r\n", irc.channel);
-    let quit = String::from("QUIT :goodbye\r\n");
+fn shutdown(irc: &mut Connection){
+    let part_string = format!("PART {}\r\n", irc.channel);
+    let part: &[u8] = part_string.as_bytes();
+    let quit: &[u8] = b"QUIT :goodbye\r\n";
 
     irc.writer.write_all(part);
     irc.writer.write_all(quit);
@@ -101,6 +103,7 @@ mod tests {
     #[test]
     fn build_connection() {
         let mut testConn = Connection::build("irc.irchighway.net".to_string(), 6660, "nick".to_string(), "#ebooks".to_string()).unwrap();
+        println!("{output}");
         assert_eq!(testConn.channel, "#ebooks");
     }
 }
