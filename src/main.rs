@@ -5,6 +5,7 @@ use std::error::Error;
 use std::process;
 
 mod irc;
+mod goodreads;
 
 #[derive(Deserialize, Debug)]
 struct BowstConfig{

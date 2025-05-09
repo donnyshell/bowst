@@ -1,3 +1,5 @@
+use serde::Deserialize;
+
 
 struct Book { 
     title: String,
@@ -11,7 +13,7 @@ struct CalibreBook {
     title: String,
 }
 
-
+/*
 // TODO implement download shelf and figure out how i want to provide the url
 fn Goodreads_Download_Manager(users: &Vec<GoodreadsUser) -> Result<HashMap<String,String>, Box<dyn Error>> {
     let mut headers = HeaderMap::new();
@@ -73,15 +75,18 @@ fn parse_xml(xml: &String) -> Result<HashMap<String, Book>, quick_xml::errors::E
     }
     Ok(books)
 }
+*/
 
 // This function creates the hash map key for the book by stripping
 fn generate_title_key(book: &Book) -> String {
-    book.title
-        .copy()
-        .retain(|c| c.is_ascii_alphanumeric())
+    let mut a = book.title
+        .clone();
+    a.retain(|c| c.is_ascii_alphanumeric() || c == ' ');
+    a
 }
 
 
+/*
 // This function takes a vec of Book, creates a set() of book names from calibredb and removes any
 // duplicates
 // The resulting list of books should be downloaded
@@ -114,6 +119,16 @@ fn remove_duplicate_books(books: Vec<Book>) {
 
 }
 }
+*/
 
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-
+    #[test]
+    fn test_book_title_key() {
+        let a = Book{
+            title: "\"a\" time: thing's we see!".to_string(),
+            author: "whoever".to_string(),
+        }; assert_eq!(generate_title_key(&a), String::from("a time things we see")); }
+}

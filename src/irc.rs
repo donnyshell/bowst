@@ -103,7 +103,6 @@ mod tests {
     #[test]
     fn build_connection() {
         let mut testConn = Connection::build("irc.irchighway.net".to_string(), 6660, "nick".to_string(), "#ebooks".to_string()).unwrap();
-        println!("{output}");
         assert_eq!(testConn.channel, "#ebooks");
     }
 }
