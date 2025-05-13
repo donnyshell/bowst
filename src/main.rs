@@ -39,7 +39,7 @@ fn main() {
         });
 
     //TODO get all shelves of all goodreads users provided
-//    let mut books: Vec<books> = Vec::new();
+//    let mut books: Vec<books> = Vec::new()
     /* for user in config.users.shelves
      *      get_shelves()
      *
@@ -57,3 +57,4 @@ fn main() {
 //    irc_connect();
 
 }
+

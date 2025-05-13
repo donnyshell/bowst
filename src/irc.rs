@@ -2,12 +2,14 @@ use std::net::{TcpStream, SocketAddr, ToSocketAddrs};
 use std::error::Error;
 use std::io;
 use std::io::prelude::*;
-
+use std::collections::HashSet;
+use crate::GoodreadsUser; 
+use crate::goodreads::Book;
 
 pub struct Connection {
     pub reader: io::BufReader<TcpStream>,
     pub writer: TcpStream,
-    pub irc_nick: String,
+    pub nick: String,
     pub url: String,
     pub channel: String,
 }
@@ -23,12 +25,13 @@ impl Connection {
     Ok(Connection {
         reader: ircReader,
         writer: ircWriter,
-        irc_nick: nick,
+        nick: nick,
         url: url,
         channel: chan,
     })
+    }
 }
-}
+
 
 fn connect_irc_first_available(addrs: impl Iterator<Item = SocketAddr>) -> io::Result<TcpStream> {
     let mut last_error = None;
@@ -44,7 +47,7 @@ fn connect_irc_first_available(addrs: impl Iterator<Item = SocketAddr>) -> io::R
 
 }
 
-/*
+
 fn irc_manager(irc: Connection, books: Vec<Book>){
     let mut requestPending = false;
     let mut botsOnline = HashSet::new();
@@ -66,7 +69,7 @@ fn irc_manager(irc: Connection, books: Vec<Book>){
             },
             "352" if split_line[8].contains("@") || split_line[8].contains("+") => {
                 //whois response, check if bot and add to map
-                bots_online.insert(split_line[4].to_string());
+                botsOnline.insert(split_line[4].to_string());
 
             },
             "NOTICE" if split_line[2] == irc.nick => {
@@ -85,7 +88,8 @@ fn irc_manager(irc: Connection, books: Vec<Book>){
     }
 
 }
-*/
+
+
 fn shutdown(irc: &mut Connection){
     let part_string = format!("PART {}\r\n", irc.channel);
     let part: &[u8] = part_string.as_bytes();

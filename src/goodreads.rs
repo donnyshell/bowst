@@ -1,9 +1,19 @@
 use serde::Deserialize;
+use std::collections::HashMap;
+use quick_xml::events::Event;
+use quick_xml::reader::Reader;
+use reqwest::header::HeaderMap;
+use std::process;
+use std::error::Error;
+use quick_xml::events::{
+    BytesStart,
+    BytesEnd};
 
+use crate::GoodreadsUser;
 
-struct Book { 
-    title: String,
-    author: String,
+pub struct Book { 
+    pub title: String,
+    pub author: String,
 }
 
 #[derive(Deserialize)]
@@ -13,9 +23,9 @@ struct CalibreBook {
     title: String,
 }
 
-/*
+
 // TODO implement download shelf and figure out how i want to provide the url
-fn Goodreads_Download_Manager(users: &Vec<GoodreadsUser) -> Result<HashMap<String,String>, Box<dyn Error>> {
+fn Goodreads_Download_Manager(users: &Vec<GoodreadsUser>) -> Result<HashMap<String,String>, Box<dyn Error>> {
     let mut headers = HeaderMap::new();
     headers.insert("User-Agent", String::from("rust-rss"));
 
@@ -26,7 +36,6 @@ fn Goodreads_Download_Manager(users: &Vec<GoodreadsUser) -> Result<HashMap<Strin
             eprintln!("Error building the reqwest client: {err}");
             process::exit(1);
         });
-    let url: &str =;
 
     let mut books_to_download = HashMap::new();
 
@@ -36,9 +45,10 @@ fn Goodreads_Download_Manager(users: &Vec<GoodreadsUser) -> Result<HashMap<Strin
             let response = client
                 .get(url)
                 .send()?
-                .text()?
+                .text()?;
                 }
                 }
+    Ok(())
 }
 
 fn parse_xml(xml: &String) -> Result<HashMap<String, Book>, quick_xml::errors::Error> {
@@ -75,7 +85,7 @@ fn parse_xml(xml: &String) -> Result<HashMap<String, Book>, quick_xml::errors::E
     }
     Ok(books)
 }
-*/
+
 
 // This function creates the hash map key for the book by stripping
 fn generate_title_key(book: &Book) -> String {
