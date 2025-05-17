@@ -3,7 +3,6 @@ use std::error::Error;
 use std::io;
 use std::io::prelude::*;
 use std::collections::HashSet;
-use crate::GoodreadsUser; 
 use crate::goodreads::Book;
 
 pub struct Connection {
@@ -48,7 +47,7 @@ fn connect_irc_first_available(addrs: impl Iterator<Item = SocketAddr>) -> io::R
 }
 
 
-fn irc_manager(irc: Connection, books: Vec<Book>){
+fn irc_manager(mut irc: Connection, books: Vec<Book>){
     let mut requestPending = false;
     let mut botsOnline = HashSet::new();
 
@@ -60,7 +59,7 @@ fn irc_manager(irc: Connection, books: Vec<Book>){
         let mut line = String::new();
         irc.reader.read_line(&mut line);
 
-        let split_line = line.split_whitespace().collect();
+        let split_line: Vec<&str>= line.split_whitespace().collect();
 
         // match the numeric we care about
         match split_line[1] {

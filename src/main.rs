@@ -38,12 +38,7 @@ fn main() {
             process::exit(1);
         });
 
-    //TODO get all shelves of all goodreads users provided
-//    let mut books: Vec<books> = Vec::new()
-    /* for user in config.users.shelves
-     *      get_shelves()
-     *
-     */
+    let books_for_irc = goodreads::Build_ToRead_Map(&config.goodreads_users);
 
 //    let conn = Connection::build(URL, PORT, config.nick, CHAN)
 //        .unwrap_or_else();

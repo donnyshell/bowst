@@ -2,7 +2,10 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use quick_xml::events::Event;
 use quick_xml::reader::Reader;
-use reqwest::header::HeaderMap;
+use reqwest::header::{
+    HeaderMap,
+    HeaderValue,
+    USER_AGENT};
 use std::process;
 use std::error::Error;
 use quick_xml::events::{
@@ -24,10 +27,9 @@ struct CalibreBook {
 }
 
 
-// TODO implement download shelf and figure out how i want to provide the url
-fn Goodreads_Download_Manager(users: &Vec<GoodreadsUser>) -> Result<HashMap<String,String>, Box<dyn Error>> {
+pub fn Build_ToRead_Map(users: &Vec<GoodreadsUser>) -> Result<HashMap<String,String>, Box<dyn Error>> {
     let mut headers = HeaderMap::new();
-    headers.insert("User-Agent", String::from("rust-rss"));
+    headers.insert(USER_AGENT, HeaderValue::from_static("rust-rss"));
 
     let client = reqwest::blocking::Client::builder()
         .default_headers(headers)
@@ -40,15 +42,16 @@ fn Goodreads_Download_Manager(users: &Vec<GoodreadsUser>) -> Result<HashMap<Stri
     let mut books_to_download = HashMap::new();
 
     for user in users {
-        for shelf in user.shelves {
+        for shelf in &user.shelves {
             let url = format!( "https://www.goodreads.com/review/list_rss/{id}?shelf={shelf}", id = user.id, shelf = shelf);
             let response = client
                 .get(url)
                 .send()?
                 .text()?;
+            let user_books = parse_xml(&response)?;
                 }
                 }
-    Ok(())
+    Ok(books_to_download)
 }
 
 fn parse_xml(xml: &String) -> Result<HashMap<String, Book>, quick_xml::errors::Error> {
@@ -75,8 +78,8 @@ fn parse_xml(xml: &String) -> Result<HashMap<String, Book>, quick_xml::errors::E
                     title: title,
                     author: author,
                 };
-                let titleKey = generate_title_key(&book);
-                books.insert(titleKey, book);
+                let title_key = generate_title_key(&book);
+                books.insert(title_key, book);
                 title = "".to_string();
                 author = "".to_string();
             },
