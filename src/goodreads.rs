@@ -14,20 +14,21 @@ use quick_xml::events::{
 
 use crate::GoodreadsUser;
 
+#[derive(Debug, Hash, Eq, PartialEq)]
 pub struct Book { 
     pub title: String,
     pub author: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Hash, Eq, PartialEq, Deserialize)]
 struct CalibreBook {
     authors: String,
-    id: usize,
+    id: u32,
     title: String,
 }
 
 
-pub fn Build_ToRead_Map(users: &Vec<GoodreadsUser>) -> Result<HashMap<String,String>, Box<dyn Error>> {
+pub fn Build_ToRead_Map(users: &Vec<GoodreadsUser>) -> Result<HashMap<String,Book>, Box<dyn Error>> {
     let mut headers = HeaderMap::new();
     headers.insert(USER_AGENT, HeaderValue::from_static("rust-rss"));
 
@@ -49,11 +50,39 @@ pub fn Build_ToRead_Map(users: &Vec<GoodreadsUser>) -> Result<HashMap<String,Str
                 .send()?
                 .text()?;
             let user_books = parse_xml(&response)?;
-                }
-                }
+            books_to_download.extend(user_books);
+        }
+    }
     Ok(books_to_download)
 }
 
+
+//TODO rename result to something useful
+// I'm parsing json into a calibre book, converting that into a book, converting that into a string
+// maybe just parse json into the string?
+pub fn get_current_library() -> Result<Vec<String>, Box<dyn Error>> {
+    let calibre_command = process::Command::new("calibredb") 
+        .args(["list", "--for-machine"])
+        .output()?;
+
+    let calibre_books: Vec<CalibreBook> = serde_json::from_slice(&calibre_command.stdout)?;
+
+
+    let mut result = Vec::new();
+    for book in calibre_books {
+        let map_book = Book{
+            title: book.title,
+            author: book.authors,
+        };
+        result.push(generate_title_key(&map_book));
+    }
+
+    Ok(result)
+}
+
+
+
+// TODO return hasmap<string book> or hashmap<title, author>
 fn parse_xml(xml: &String) -> Result<HashMap<String, Book>, quick_xml::errors::Error> {
     let mut books = HashMap::with_capacity(100);
     let mut reader = Reader::from_str(xml);
@@ -91,6 +120,7 @@ fn parse_xml(xml: &String) -> Result<HashMap<String, Book>, quick_xml::errors::E
 
 
 // This function creates the hash map key for the book by stripping
+// TODO swap chars to lower
 fn generate_title_key(book: &Book) -> String {
     let mut a = book.title
         .clone();
@@ -98,41 +128,6 @@ fn generate_title_key(book: &Book) -> String {
     a
 }
 
-
-/*
-// This function takes a vec of Book, creates a set() of book names from calibredb and removes any
-// duplicates
-// The resulting list of books should be downloaded
-fn remove_duplicate_books(books: Vec<Book>) {
-    // get current library via calibredb list as json with --for-machine
-    let mut output = Command::new("calibredb")
-        .args(["list", "--for-machine"])
-        .output()
-        .expect("failed to get calibre books");
-
-    //TODO output is a structure that contains stdout which is a vec<u8> of json containing all the
-    //library
-    calibreOutputIter = output.stdout.split_inclusive("},\n");
-
-    let calibreBooks = HashMap::new();
-
-    for existingBook in calibreOutputIter {
-        //parse into calibre book, strip non-alphanumerics from title, add to hashset
-        let mut book = serde_json::from_str(existingBook);
-        book.title.retain(|c| c.is_ascii_alphanumeric());
-        calibreBooks.insert(book.title);
-    }
-
-    for book in books {
-        let mut titleclone = book.title.clone();
-        titleclone.retain(|c| c.is_ascii_alphanumeric());
-        if calibreBooks.contains(titleclone) {
-            //remove the book from the new books
-        }
-
-}
-}
-*/
 
 #[cfg(test)]
 mod tests {
@@ -143,5 +138,31 @@ mod tests {
         let a = Book{
             title: "\"a\" time: thing's we see!".to_string(),
             author: "whoever".to_string(),
-        }; assert_eq!(generate_title_key(&a), String::from("a time things we see")); }
+        }; 
+        assert_eq!(generate_title_key(&a), String::from("a time things we see")); 
+    }
+
+    #[test]
+    fn test_build_reader_map() {
+        let test = vec!(GoodreadsUser{
+            name: "Test".to_string(),
+            id: 186388648,
+            shelves: vec!("test".to_string()),
+        });
+        let mut result = HashMap::new();
+        result.insert("Brave New World".to_string(), Book{
+            title: "Brave New World".to_string(),
+            author: "Aldous Huxley".to_string(),
+        });
+        assert_eq!(Build_ToRead_Map(&test).unwrap(), result);
+    }
+    
+    #[test]
+    fn test_get_calibre_library() {
+        let res = get_current_library().unwrap();
+ //       let book = Some(Book{ title: "Babel".to_string(), author: "R. F. Kuang".to_string()});
+ //       assert_eq!(res.get("Babel"), book.as_ref());
+          assert_eq!(1, 1);
+    }
+    
 }

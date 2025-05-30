@@ -31,6 +31,7 @@ impl BowstConfig {
 
 
 fn main() {
+
     //read config file
     let config = BowstConfig::build()
         .unwrap_or_else(|err| {
@@ -38,18 +39,17 @@ fn main() {
             process::exit(1);
         });
 
-    let books_for_irc = goodreads::Build_ToRead_Map(&config.goodreads_users);
+    let mut books_for_irc = goodreads::Build_ToRead_Map(&config.goodreads_users).unwrap();
 
-//    let conn = Connection::build(URL, PORT, config.nick, CHAN)
-//        .unwrap_or_else();
-//    conn.writer.write_all(format!("USER {} * {} :{}\r\n", conn.nick, conn.url, conn.nick).as_bytes());
-//    conn.writer.write_all(format!("NICK {conn.nick}\r\n").as_bytes());
-//    conn.writer.write_all(format!("JOIN #{conn.channel}\r\n").as_bytes());
+    let calibre_lib = goodreads::get_current_library().unwrap();
 
+    for book in calibre_lib {
+        match books_for_irc.contains_key(&book) {
+            true => { books_for_irc.remove(&book); },
+            false => (),
+        };
+    }
 
-//    let parsed_xml = goodreads::parse_xml(&response).unwrap(); 
-//    println!("books length is: {}", parsed_xml.len());
-//    irc_connect();
-
+    println!("{:?}", books_for_irc);
 }
 

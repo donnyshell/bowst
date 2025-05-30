@@ -47,9 +47,14 @@ fn connect_irc_first_available(addrs: impl Iterator<Item = SocketAddr>) -> io::R
 }
 
 
-fn irc_manager(mut irc: Connection, books: Vec<Book>){
+fn irc_manager(mut irc: Connection, mut books: Vec<Book>){
     let mut requestPending = false;
     let mut botsOnline = HashSet::new();
+//    conn.writer.write_all(format!("USER {} * {} :{}\r\n", conn.nick, conn.url, conn.nick).as_bytes());
+//    conn.writer.write_all(format!("NICK {conn.nick}\r\n").as_bytes());
+//    conn.writer.write_all(format!("JOIN #{conn.channel}\r\n").as_bytes());
+
+
 
     while books.is_empty() == false {
         if requestPending == false {
@@ -71,25 +76,55 @@ fn irc_manager(mut irc: Connection, books: Vec<Book>){
                 botsOnline.insert(split_line[4].to_string());
 
             },
-            "NOTICE" if split_line[2] == irc.nick => {
+//            "NOTICE" if split_line[2] == irc.nick => {
                 //notice sent to self check if search bot results
-            },
+//               }
+//            },
             "PRIVMSG" if split_line[2] == irc.nick => {
-                //private message sent to self, check if dcc
-            },
+                 if (split_line[3], split_line[4]) == (":.DCC", "SEND") {
+                     //TODO something here dcc_manager(&split_line);
+            }},
             _ if split_line[0] == "PING" => {
                 irc.writer.write_all("PONG\r\n".as_bytes());
             },
-            _ => ()
+            _ => {
+                irc.writer.write_all("hello\r\n".as_bytes());
+                books.pop(); 
+            }
         }
 
 
     }
+    shutdown(irc);
 
 }
 
 
-fn shutdown(irc: &mut Connection){
+//TODO fix the unwrap
+fn dcc_manager(split_line: &Vec<&str>, bots_online: &HashSet<&str>){
+    //filesize. is last arg, then port, then IP
+    let line_length = split_line.len();
+    let ip = split_line[line_length-3];
+    let port = split_line[line_length-2];
+    let filesize: usize = usize::from_str_radix(split_line[line_length-1].trim_matches('.'), 10).unwrap();
+
+    let mut file: Vec<u8> = Vec::with_capacity(filesize);
+
+    //TODO connect to ip over port, write output to file vec
+    //TODO get zip library to unzip and then process text
+
+}
+
+fn parse_searchbot() {
+
+}
+
+fn add_book(){
+}
+
+
+
+fn shutdown(mut irc: Connection){
     let part_string = format!("PART {}\r\n", irc.channel);
     let part: &[u8] = part_string.as_bytes();
     let quit: &[u8] = b"QUIT :goodbye\r\n";
@@ -108,4 +143,13 @@ mod tests {
         let mut testConn = Connection::build("irc.irchighway.net".to_string(), 6660, "nick".to_string(), "#ebooks".to_string()).unwrap();
         assert_eq!(testConn.channel, "#ebooks");
     }
+
+    /*
+    #[test]
+    fn test_irc_manager(){
+        let mut con = Connection::build("127.0.0.1".to_string(), 303, "fish1".to_string(), "#test".to_string()).unwrap();
+        let mut books = vec!(Book{ title: "this".to_string(), author: "that".to_string()}, Book{title:"this".to_string(), author: "that".to_string()});
+        irc_manager(con, books);
+        assert_eq!(1, 1);
+    }*/
 }
